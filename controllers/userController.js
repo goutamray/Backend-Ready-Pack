@@ -2,8 +2,8 @@
 import asyncHandler from "express-async-handler"; 
 import User from "../models/User.js"; 
 import bcrypt from "bcrypt";
-import { fileUploadToCloud } from "../utils/cloudinary.js";
-import { isEmail, isMobile } from "../helpers/helpers.js";
+import { fileDeleteFromCloud, fileUploadToCloud } from "../utils/cloudinary.js";
+import { findPublicId, isEmail, isMobile } from "../helpers/helpers.js";
 
 
 /**
@@ -34,7 +34,18 @@ export const getAllUsers = asyncHandler(async(req, res) => {
  * 
  */
 export const getSingleUser = asyncHandler(async(req, res) => {
-    
+    // get params 
+    const { id } = req.params;
+
+    // find single user
+    const user = await User.findById(id); 
+   
+    // check single user 
+    if (!user) {
+       return res.status(404).json({ message : "Single User Data Not Found"});
+    }
+  
+    res.status(200).json({user : user, message : "Single User Data"});
 });  
 
 /**
@@ -100,6 +111,7 @@ export const createUser = asyncHandler(async(req, res) => {
   res.status(201).json({ user : user, message : "User Created Successfull", });
 });  
 
+
 /**
  * @DESC DELETE USER 
  * @METHOD DELETE
@@ -108,7 +120,17 @@ export const createUser = asyncHandler(async(req, res) => {
  * 
  */
 export const deleteUser = asyncHandler(async(req, res) => {
-    
+   // get params 
+   const { id } = req.params;
+
+   // delete user data 
+   const user = await User.findByIdAndDelete(id);
+
+   // delete cloud file
+    await fileDeleteFromCloud(findPublicId(user.photo));  
+
+   // response  
+   res.status(200).json({ user, message : "User deleted successfull"});
 });  
 
 /**
@@ -119,8 +141,30 @@ export const deleteUser = asyncHandler(async(req, res) => {
  * 
  */
 export const updateUser = asyncHandler(async(req, res) => {
-    
+   // get params data
+   const { id } = req.params;
+
+   // get body data
+   const { name, email, phone } = req.body; 
+
+   // check valid email 
+    if (!isEmail(email)) {
+      return res.status(400).json({users : "", message : "Invalid Email Address"});
+    };
+   
+   // check valid phone number 
+    if (!isMobile(phone)) {
+       return res.status(400).json({users : "", message : "Invalid Phone Number"});
+    };
+
+    // update user 
+    const updateUser = await User.findByIdAndUpdate(id, {name, email, phone}, {new : true});
+
+    // response 
+     res.status(200).json({ user : updateUser, message : "User Data updated Successfull"});
 });  
+
+
 
 
 

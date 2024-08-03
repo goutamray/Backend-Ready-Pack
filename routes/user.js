@@ -23,7 +23,7 @@ router
 router
 .route("/:id")
 .delete(deleteUser)
-.patch(updateUser)
+.patch(userPhotoMulter, updateUser)
 .get(getSingleUser); 
 
 // export default
